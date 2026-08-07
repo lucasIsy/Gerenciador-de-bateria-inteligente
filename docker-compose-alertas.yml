@@ -1,0 +1,25 @@
+name: P-Alertas
+
+networks:
+  rede_iot:
+    external: true
+
+services:
+  alerta-discord:
+    build:
+      context: ./servico-alertas
+    container_name: servico-alertas-node
+    restart: "unless-stopped"
+
+    environment:
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - KAFKA_BROKER=kafka:29092
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+        reservations:
+          memory: 32M
+    networks:
+      - rede_iot

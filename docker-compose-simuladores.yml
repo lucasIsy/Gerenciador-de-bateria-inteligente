@@ -1,0 +1,77 @@
+name: P-Iot-Simulador
+
+# ==============================================================================
+# CONFIGURAÇÕES PADRÃO
+# ==============================================================================
+x-simulador-base: &simulador-base
+  build:
+    context: ./simuladores-iot
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  environment:
+    - MQTT_HOST=mosquitto
+    - PYTHONUNBUFFERED=1
+  deploy:
+    resources:
+      limits:
+        cpus: '0.20'
+        memory: 128M
+      reservations:
+        memory: 32M
+  networks:
+    - rede_iot
+
+networks:
+  rede_iot:
+    external: true
+
+services:
+  # ============================================================================
+  # 1. MQTT - Mosquitto (Primeiro a iniciar)
+  # ============================================================================
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+        reservations:
+          memory: 32M
+    networks:
+      - rede_iot
+
+  # ============================================================================
+  # 1. BATERIA (Segundo a iniciar)
+  # ============================================================================
+  simulador-bateria:
+    <<: *simulador-base # recebe as configurações padrão
+    container_name: sistema_bateria
+    command: python -u src/bateria.py
+
+  # ============================================================================
+  # 2. PAINEL SOLAR (Terceiro a iniciar)
+  # ============================================================================
+  simulador-painel:
+    <<: *simulador-base
+    container_name: sistema_painel_solar
+    command: python -u src/painel_solar.py
+    depends_on:
+      - simulador-bateria
+
+  # ============================================================================
+  # 3. DISPOSITIVOS IOT (Quarto a iniciar)
+  # ============================================================================
+  simulador-dispositivos:
+    <<: *simulador-base
+    container_name: sistema_dispositivos_iot
+    command: python -u src/dispositivos_iot.py
+    depends_on:
+      - simulador-painel
+      - simulador-bateria
