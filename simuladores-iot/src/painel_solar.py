@@ -1,3 +1,8 @@
+# ====================================================================
+# [ATENCAO] Os IoTs foram criados utilizando o gemini pro 3.1.
+# O objetivo é criar um dispositivo que se aproximasse da realidade.
+# ====================================================================
+
 import time
 import json
 import random
