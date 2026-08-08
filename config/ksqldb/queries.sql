@@ -3,7 +3,7 @@ CREATE STREAM stream_telemetria_bruta (
     id_dispositivo VARCHAR,
     nivel_bateria DOUBLE
 ) WITH (
-    KAFKA_TOPIC='telemetria_iot',
+    KAFKA_TOPIC='iot_armazenamento',
     VALUE_FORMAT='JSON'
 );
 
