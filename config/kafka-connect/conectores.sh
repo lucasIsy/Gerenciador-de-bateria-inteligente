@@ -12,15 +12,48 @@ echo "Kafka Connect pronto! Registrando conectores..."
 # ==========================================
 # 1. Source Connector (Mosquitto -> Kafka)
 # ==========================================
-echo -e "\n\nCriando/Atualizando: mqtt-source-connector..."
-curl -X PUT "http://localhost:8083/connectors/mqtt-source-connector/config" \
+# 1. Conector para o Painel Solar
+echo -e "\n\nCriando/Atualizando: mqtt-source-geracao..."
+curl -X PUT "http://localhost:8083/connectors/mqtt-source-geracao/config" \
   -H "Content-Type: application/json" \
   -d '{
     "connector.class": "io.confluent.connect.mqtt.MqttSourceConnector",
     "tasks.max": "1",
     "mqtt.server.uri": "tcp://mosquitto:1883",
-    "mqtt.topics": "iot/#",
-    "kafka.topic": "telemetria_iot",
+    "mqtt.topics": "iot/geracao/#",
+    "kafka.topic": "iot_geracao",
+    "confluent.topic.bootstrap.servers": "kafka:9092",
+    "confluent.topic.replication.factor": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter":"org.apache.kafka.connect.converters.ByteArrayConverter"
+}'
+
+# 2. Conector para Armazenamento
+echo -e "\n\nCriando/Atualizando: mqtt-source-armazenamento..."
+curl -X PUT "http://localhost:8083/connectors/mqtt-source-armazenamento/config" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connector.class": "io.confluent.connect.mqtt.MqttSourceConnector",
+    "tasks.max": "1",
+    "mqtt.server.uri": "tcp://mosquitto:1883",
+    "mqtt.topics": "iot/armazenamento/#",
+    "kafka.topic": "iot_armazenamento",
+    "confluent.topic.bootstrap.servers": "kafka:9092",
+    "confluent.topic.replication.factor": "1",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter":"org.apache.kafka.connect.converters.ByteArrayConverter"
+}'
+
+# 3. Conector para os Dispositivos
+echo -e "\n\nCriando/Atualizando: mqtt-source-dispositivos..."
+curl -X PUT "http://localhost:8083/connectors/mqtt-source-dispositivos/config" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "connector.class": "io.confluent.connect.mqtt.MqttSourceConnector",
+    "tasks.max": "1",
+    "mqtt.server.uri": "tcp://mosquitto:1883",
+    "mqtt.topics": "iot/dispositivos/#",
+    "kafka.topic": "iot_dispositivos",
     "confluent.topic.bootstrap.servers": "kafka:9092",
     "confluent.topic.replication.factor": "1",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
