@@ -1,0 +1,549 @@
+{
+    "apiVersion": "dashboard.grafana.app/v2",
+    "kind": "Dashboard",
+    "metadata": {
+        "name": "ad5dxp6",
+        "namespace": "default",
+        "uid": "6f00e6e3-471b-407c-893a-2232dd76b58d",
+        "resourceVersion": "1786197557112014",
+        "generation": 2,
+        "creationTimestamp": "2026-08-08T00:40:01Z",
+        "labels": {
+            "grafana.app/deprecatedInternalID": "722099954475008"
+        },
+        "annotations": {
+            "grafana.app/createdBy": "access-policy:service",
+            "grafana.app/managedBy": "classic-file-provisioning",
+            "grafana.app/managerId": "Dashboards IoT",
+            "grafana.app/sourceChecksum": "9d0538d5f928432840b9b9b9d2a3d0e6",
+            "grafana.app/sourcePath": "/etc/grafana/dashboards/meu_dashboard_iot.json",
+            "grafana.app/sourceTimestamp": "1786158828000",
+            "grafana.app/updatedBy": "access-policy:service",
+            "grafana.app/updatedTimestamp": "2026-08-08T13:59:17Z"
+        }
+    },
+    "spec": {
+        "annotations": [
+            {
+                "kind": "AnnotationQuery",
+                "spec": {
+                    "query": {
+                        "kind": "DataQuery",
+                        "group": "grafana",
+                        "version": "v0",
+                        "datasource": {
+                            "name": "-- Grafana --"
+                        },
+                        "spec": {}
+                    },
+                    "enable": true,
+                    "hide": true,
+                    "iconColor": "rgba(0, 211, 255, 1)",
+                    "name": "Annotations & Alerts",
+                    "builtIn": true
+                }
+            }
+        ],
+        "cursorSync": "Off",
+        "editable": true,
+        "elements": {
+            "panel-1": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 1,
+                    "title": "Consumo dos Dispositivos",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "influxdb",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "InfluxDB_IoT"
+                                            },
+                                            "spec": {
+                                                "query": "from(bucket: \"telemetria\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"dispositivo\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"watts\")"
+                                            }
+                                        },
+                                        "refId": "A",
+                                        "hidden": false
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "gauge",
+                        "version": "13.1.3",
+                        "spec": {
+                            "options": {
+                                "barShape": "rounded",
+                                "barWidthFactor": 0.33,
+                                "effects": {
+                                    "barGlow": false,
+                                    "centerGlow": false,
+                                    "gradient": false
+                                },
+                                "endpointMarker": "none",
+                                "minVizHeight": 75,
+                                "minVizWidth": 75,
+                                "orientation": "auto",
+                                "reduceOptions": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ],
+                                    "fields": "",
+                                    "values": false
+                                },
+                                "segmentCount": 1,
+                                "segmentSpacing": 0.15,
+                                "shape": "circle",
+                                "showThresholdLabels": false,
+                                "showThresholdMarkers": false,
+                                "sizing": "auto",
+                                "sparkline": true,
+                                "textMode": "value_and_name"
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "displayName": "${__field.labels.id_dispositivo}",
+                                    "thresholds": {
+                                        "mode": "percentage",
+                                        "steps": [
+                                            {
+                                                "value": 0,
+                                                "color": "green"
+                                            },
+                                            {
+                                                "value": 0,
+                                                "color": "transparent"
+                                            },
+                                            {
+                                                "value": 100,
+                                                "color": "blue"
+                                            }
+                                        ]
+                                    },
+                                    "color": {
+                                        "mode": "fixed",
+                                        "fixedColor": "blue"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "panel-2": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 2,
+                    "title": "Capacidade da Bateria",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "influxdb",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "InfluxDB_IoT"
+                                            },
+                                            "spec": {
+                                                "query": "from(bucket: \"telemetria\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"armazenamento\")\r\n  |> filter(fn: (r) => r[\"id_dispositivo\"] == \"bateria_principal\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"nivel_bateria\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"armazenamento\")"
+                                            }
+                                        },
+                                        "refId": "A",
+                                        "hidden": false
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "gauge",
+                        "version": "13.1.3",
+                        "spec": {
+                            "options": {
+                                "barShape": "flat",
+                                "barWidthFactor": 0.54,
+                                "effects": {
+                                    "barGlow": false,
+                                    "centerGlow": false,
+                                    "gradient": false
+                                },
+                                "endpointMarker": "point",
+                                "minVizHeight": 75,
+                                "minVizWidth": 75,
+                                "orientation": "auto",
+                                "reduceOptions": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ],
+                                    "fields": "",
+                                    "values": false
+                                },
+                                "segmentCount": 63,
+                                "segmentSpacing": 0.18,
+                                "shape": "gauge",
+                                "showThresholdLabels": false,
+                                "showThresholdMarkers": true,
+                                "sizing": "auto",
+                                "sparkline": true,
+                                "textMode": "auto"
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "thresholds": {
+                                        "mode": "percentage",
+                                        "steps": [
+                                            {
+                                                "value": 0,
+                                                "color": "red"
+                                            },
+                                            {
+                                                "value": 20,
+                                                "color": "#EAB839"
+                                            },
+                                            {
+                                                "value": 60,
+                                                "color": "green"
+                                            }
+                                        ]
+                                    },
+                                    "color": {
+                                        "mode": "thresholds"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "panel-3": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 3,
+                    "title": "Produção da Energia",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "influxdb",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "InfluxDB_IoT"
+                                            },
+                                            "spec": {
+                                                "query": "from(bucket: \"telemetria\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"geracao\")\r\n  |> filter(fn: (r) => r[\"id_dispositivo\"] == \"painel_solar\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"potencia_gerada\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"capacidade\")"
+                                            }
+                                        },
+                                        "refId": "A",
+                                        "hidden": false
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "timeseries",
+                        "version": "13.1.3",
+                        "spec": {
+                            "options": {
+                                "annotations": {
+                                    "clustering": -1,
+                                    "multiLane": false
+                                },
+                                "legend": {
+                                    "calcs": [],
+                                    "displayMode": "list",
+                                    "enableFacetedFilter": false,
+                                    "overflow": "ellipsis",
+                                    "placement": "bottom",
+                                    "showLegend": false
+                                },
+                                "tooltip": {
+                                    "hideZeros": false,
+                                    "mode": "single",
+                                    "sort": "none"
+                                }
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": 0,
+                                                "color": "green"
+                                            },
+                                            {
+                                                "value": 80,
+                                                "color": "red"
+                                            }
+                                        ]
+                                    },
+                                    "color": {
+                                        "mode": "palette-classic"
+                                    },
+                                    "custom": {
+                                        "axisBorderShow": false,
+                                        "axisCenteredZero": false,
+                                        "axisColorMode": "text",
+                                        "axisLabel": "",
+                                        "axisPlacement": "auto",
+                                        "barAlignment": 0,
+                                        "barWidthFactor": 0.6,
+                                        "drawStyle": "line",
+                                        "fillOpacity": 25,
+                                        "gradientMode": "none",
+                                        "hideFrom": {
+                                            "legend": false,
+                                            "tooltip": false,
+                                            "viz": false
+                                        },
+                                        "insertNulls": false,
+                                        "lineInterpolation": "smooth",
+                                        "lineWidth": 2,
+                                        "pointSize": 5,
+                                        "scaleDistribution": {
+                                            "type": "linear"
+                                        },
+                                        "showPoints": "auto",
+                                        "showValues": false,
+                                        "spanNulls": false,
+                                        "stacking": {
+                                            "group": "A",
+                                            "mode": "none"
+                                        },
+                                        "thresholdsStyle": {
+                                            "mode": "off"
+                                        }
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            },
+            "panel-4": {
+                "kind": "Panel",
+                "spec": {
+                    "id": 4,
+                    "title": "Economia",
+                    "description": "",
+                    "links": [],
+                    "data": {
+                        "kind": "QueryGroup",
+                        "spec": {
+                            "queries": [
+                                {
+                                    "kind": "PanelQuery",
+                                    "spec": {
+                                        "query": {
+                                            "kind": "DataQuery",
+                                            "group": "influxdb",
+                                            "version": "v0",
+                                            "datasource": {
+                                                "name": "P99416EC0F8906468"
+                                            },
+                                            "spec": {
+                                                "query": "from(bucket: \"telemetria\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"dispositivo\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"energia_economizada\")\r\n  |> group(columns: [\"id_dispositivo\"]) // Agrupa por aparelho\r\n  |> last()                             // Pega o valor máximo de cada um\r\n  |> group()                            // Remove o agrupamento\r\n  |> sum()                              // Soma o valor de todos os aparelhos\r\n  |> yield(name: \"total_geral\")"
+                                            }
+                                        },
+                                        "refId": "A",
+                                        "hidden": false
+                                    }
+                                }
+                            ],
+                            "transformations": [],
+                            "queryOptions": {}
+                        }
+                    },
+                    "vizConfig": {
+                        "kind": "VizConfig",
+                        "group": "gauge",
+                        "version": "13.1.3",
+                        "spec": {
+                            "options": {
+                                "barShape": "flat",
+                                "barWidthFactor": 0.3,
+                                "effects": {
+                                    "barGlow": false,
+                                    "centerGlow": false,
+                                    "gradient": true
+                                },
+                                "endpointMarker": "point",
+                                "minVizHeight": 75,
+                                "minVizWidth": 75,
+                                "orientation": "auto",
+                                "reduceOptions": {
+                                    "calcs": [
+                                        "lastNotNull"
+                                    ],
+                                    "fields": "",
+                                    "values": false
+                                },
+                                "segmentCount": 1,
+                                "segmentSpacing": 0.3,
+                                "shape": "gauge",
+                                "showThresholdLabels": false,
+                                "showThresholdMarkers": false,
+                                "sizing": "auto",
+                                "sparkline": false,
+                                "textMode": "auto"
+                            },
+                            "fieldConfig": {
+                                "defaults": {
+                                    "unit": "watth",
+                                    "thresholds": {
+                                        "mode": "absolute",
+                                        "steps": [
+                                            {
+                                                "value": 0,
+                                                "color": "green"
+                                            },
+                                            {
+                                                "value": 80,
+                                                "color": "red"
+                                            }
+                                        ]
+                                    },
+                                    "color": {
+                                        "mode": "thresholds"
+                                    }
+                                },
+                                "overrides": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "layout": {
+            "kind": "GridLayout",
+            "spec": {
+                "items": [
+                    {
+                        "kind": "GridLayoutItem",
+                        "spec": {
+                            "x": 0,
+                            "y": 0,
+                            "width": 7,
+                            "height": 5,
+                            "element": {
+                                "kind": "ElementReference",
+                                "name": "panel-2"
+                            }
+                        }
+                    },
+                    {
+                        "kind": "GridLayoutItem",
+                        "spec": {
+                            "x": 7,
+                            "y": 0,
+                            "width": 17,
+                            "height": 10,
+                            "element": {
+                                "kind": "ElementReference",
+                                "name": "panel-3"
+                            }
+                        }
+                    },
+                    {
+                        "kind": "GridLayoutItem",
+                        "spec": {
+                            "x": 0,
+                            "y": 5,
+                            "width": 7,
+                            "height": 5,
+                            "element": {
+                                "kind": "ElementReference",
+                                "name": "panel-4"
+                            }
+                        }
+                    },
+                    {
+                        "kind": "GridLayoutItem",
+                        "spec": {
+                            "x": 0,
+                            "y": 10,
+                            "width": 24,
+                            "height": 5,
+                            "element": {
+                                "kind": "ElementReference",
+                                "name": "panel-1"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "links": [],
+        "liveNow": false,
+        "preload": false,
+        "tags": [],
+        "timeSettings": {
+            "timezone": "browser",
+            "from": "now-5m",
+            "to": "now",
+            "autoRefresh": "auto",
+            "autoRefreshIntervals": [
+                "5s",
+                "10s",
+                "30s",
+                "1m",
+                "5m",
+                "15m",
+                "30m",
+                "1h",
+                "2h",
+                "1d"
+            ],
+            "hideTimepicker": false,
+            "fiscalYearStartMonth": 0
+        },
+        "title": "Telemetria Dashboard",
+        "variables": [],
+        "preferences": {
+            "layout": {
+                "kind": "GridLayout",
+                "spec": {
+                    "items": []
+                }
+            }
+        }
+    }
+}
