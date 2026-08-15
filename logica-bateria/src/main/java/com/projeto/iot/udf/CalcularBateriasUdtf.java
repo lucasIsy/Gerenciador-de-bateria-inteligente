@@ -14,10 +14,10 @@ public class CalcularBateriasUdtf {
     public List<String> calcular(@UdfParameter(value = "nivel_bateria") final Double bateria) {
         List<String> comandos = new ArrayList<>();
         
-        comandos.add("Critico:" + avaliar(bateria, 10, 15));
-        comandos.add("Essencial:" + avaliar(bateria, 30, 35));
-        comandos.add("Importante:" + avaliar(bateria, 50, 55));
-        comandos.add("Secundario:" + avaliar(bateria, 70, 75));
+        comandos.add("Critico:" + avaliar(bateria, 0, 15));
+        comandos.add("Essencial:" + avaliar(bateria, 60, 35));
+        comandos.add("Importante:" + avaliar(bateria, 70, 55));
+        comandos.add("Secundario:" + avaliar(bateria, 80, 75));
         comandos.add("Superficial:" + avaliar(bateria, 90, 95));
         
         return comandos;

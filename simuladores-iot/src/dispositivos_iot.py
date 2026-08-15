@@ -10,6 +10,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = 1883
 TOPICO_COMANDOS = "comandos/#"
+TOPICO_STATUS_CONEXAO = "status_conexao/dispositivos_iot"
 
 # 1. IoTs Simulados
 dispositivos = {
@@ -94,6 +95,95 @@ dispositivos = {
         "prioridade": 4,
         "categoria": "Secundario",
     },
+    
+    # ==========================================
+    # CATEGORIA: SECUNDÁRIO (Prioridade 4)
+    # ==========================================
+    "tv_sala": {
+        "id_dispositivo": "tv_sala",
+        "potencia_nominal": 120.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 4,
+        "categoria": "Secundario",
+    },
+    "carregador_celular": {
+        "id_dispositivo": "carregador_celular",
+        "potencia_nominal": 18.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.85,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 4,
+        "categoria": "Secundario",
+    },
+    "home_theater": {
+        "id_dispositivo": "home_theater",
+        "potencia_nominal": 85.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.90,
+        "tipo_comportamento": "carga_variavel", # O som varia com as explosões do filme
+        "ligado": False,
+        "prioridade": 4,
+        "categoria": "Secundario",
+    },
+    
+    # ==========================================
+    # CATEGORIA: SUPERFICIAL (Prioridade 5)
+    # ==========================================
+    "console_videogame": {
+        "id_dispositivo": "console_videogame",
+        "potencia_nominal": 200.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "carga_variavel",
+        "ligado": False,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "fita_led_decorativa": {
+        "id_dispositivo": "fita_led_decorativa",
+        "potencia_nominal": 24.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.90,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "adega_vinhos": {
+        "id_dispositivo": "adega_vinhos",
+        "potencia_standby": 10.0,
+        "potencia_compressor": 95.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.82,
+        "tipo_comportamento": "ciclico", # Segue o mesmo padrão da geladeira
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "robo_aspirador": {
+        "id_dispositivo": "robo_aspirador",
+        "potencia_nominal": 35.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "constante", # Considerando a base de carregamento
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "difusor_ar": {
+        "id_dispositivo": "difusor_ar",
+        "potencia_nominal": 12.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.80,
+        "tipo_comportamento": "constante",
+        "ligado": False,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    }
 }
 
 # Inicialização de variáveis de controle de tempo e energia
@@ -150,10 +240,16 @@ client = mqtt.Client(
 
 client.on_message = on_message
 conectado = False
+
+# Envia o status MQTT-desligado
+client.will_set(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
+
 while not conectado:
     try:
         client.connect(MQTT_HOST, MQTT_PORT, 60)
         conectado = True
+        client.loop_start()
+
         print("Conexão com o broker MQTT concluída.")
     except (socket.gaierror, ConnectionRefusedError) as e:
         print(f"Broker MQTT indisponível ({e}). Tentando novamente em 5 segundos...")
@@ -161,9 +257,11 @@ while not conectado:
         
 # Topico das ordens de desligar/ligar
 client.subscribe(TOPICO_COMANDOS) 
-client.loop_start()
 
 print("[IoT-Start] Iniciando Dispositivos")
+
+# Envia o status MQTT-Ligado 
+client.publish(topic=TOPICO_STATUS_CONEXAO, payload="online", qos=1, retain=True)
 
 try:
     while True:
@@ -210,11 +308,12 @@ try:
 
             # Monta o tópico dinâmico: iot/dispositivos/geladeira/consumo, etc.
             topico_dinamico = f"iot/dispositivos/{dev}/consumo"   
-            client.publish(topico_dinamico, json.dumps(payload), qos=1)
+            client.publish(topico_dinamico, json.dumps(payload), qos=1, retain=False)
 
         time.sleep(1)
 
 except KeyboardInterrupt:
     print("\n [IoT-Finalizado] Desligando o simulador de dispositivos...")
+    client.publish(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
     client.loop_stop()
     client.disconnect()
