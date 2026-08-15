@@ -106,5 +106,4 @@ services:
       - rede_iot
 
 volumes:
-  mosquitto_data:
   kafka_data:
