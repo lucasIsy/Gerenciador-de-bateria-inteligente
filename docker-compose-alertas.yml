@@ -13,7 +13,7 @@ services:
 
     environment:
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-      - KAFKA_BROKER=kafka:29092
+      - KAFKA_BROKER=kafka:9092
     deploy:
       resources:
         limits:

@@ -16,67 +16,87 @@ const kafka = new Kafka({
 
 const consumer = kafka.consumer({ groupId: 'grupo-alertas-discord' });
 
+let capacidadeAtual = "Desconhecido";
+
 async function run() {
     await consumer.connect();
-    // Não ler alertas anteriores em caso de falha ou retry - evitar desligamentos indesejados
-    await consumer.subscribe({ topic: 'comandos_mqtt_iot', fromBeginning: false });
+
+    await consumer.subscribe({
+        topics: ['comandos_mqtt_iot', 'iot_armazenamento'],
+        fromBeginning: false
+    });
 
     console.log(`[Alerta-Comandos] Escutando alertas no Kafka (${KAFKA_BROKER})`);
 
     await consumer.run({
-        eachMessage: async ({ message }) => {
-            // Lê o JSON do Kafka
-            const payload = JSON.parse(message.value.toString());
+        eachMessage: async ({ topic, message }) => {
+            try {
+                const payload = JSON.parse(message.value.toString());
 
-            const { ID_DISPOSITIVO, CATEGORIA, COMANDO } = payload;
-
-            if (COMANDO === 'DESLIGAR') {
-                const embedDesligar = {
-                    title: "⚠️ ALERTA DE BATERIA CRÍTICA",
-                    description: "O nível de bateria atingiu um estado crítico e uma ação preventiva foi tomada.",
-                    color: 16711680, // Código decimal para a cor Vermelha (0xFF0000)
-                    fields: [
-                        { name: "📱 Dispositivo", value: `\`${ID_DISPOSITIVO}\``, inline: true },
-                        { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: true },
-                        { name: "🔌 Ação Automática", value: "🚨 **DESLIGADO**", inline: false }
-                    ],
-                    timestamp: new Date().toISOString(), // Adiciona a hora no rodape
-                    footer: { text: "Sistema de Monitoramento IoT" }
-                };
-
-                console.log(`[Alerta-Discord] Enviando alerta do dispositivo ${ID_DISPOSITIVO} (${CATEGORIA}) para o Discord.`);
-
-                try {
-                    await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embedDesligar] });
-                    console.log(`[Alerta-Envio] Alerta enviado com sucesso!`);
-                } catch (error) {
-                    console.error("[Alerta-Erro-Envio-Discord] Erro ao enviar pro Discord:", error.message);
+                if (topic === 'iot_armazenamento') {
+                    if (payload.nivel_bateria !== undefined) {
+                        capacidadeAtual = payload.nivel_bateria;
+                    }
                 }
-            }
-            else if (COMANDO === 'LIGAR') {
-                const embedLigar = {
-                    title: "🔋 EQUIPAMENTOS RELIGANDO",
-                    description: "O sistema estabilizou e a energia foi restaurada.",
-                    color: 65280,
-                    fields: [
-                        { name: "📱 Dispositivo", value: `\`${ID_DISPOSITIVO}\``, inline: true },
-                        { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: true },
-                        { name: "🔌 Ação Automática", value: "✅ **LIGADO**", inline: false }
-                    ],
-                    timestamp: new Date().toISOString(),
-                    footer: { text: "Sistema de Monitoramento IoT" }
-                };
+                else if (topic === 'comandos_mqtt_iot') {
+                    const { ID_DISPOSITIVO, CATEGORIA, COMANDO } = payload;
 
-                console.log(`[Alerta-Discord] Enviando alerta do dispositivo ${ID_DISPOSITIVO} (${CATEGORIA}) para o Discord...`);
+                    const CAPACIDADE = capacidadeAtual !== "Desconhecido"
+                        ? `${Math.round(Number(capacidadeAtual))}%`
+                        : "Desconhecido";
 
-                try {
-                    await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embedLigar] });
-                    console.log(`[Alerta-Envio] Alerta enviado com sucesso!`);
-                } catch (error) {
-                    console.error("[Alerta-Erro-Envio-Discord] Erro ao enviar pro Discord:", error.message);
+                    if (COMANDO === 'DESLIGAR') {
+                        const embedDesligar = {
+                            title: "⚠️ DESLIGANDO DISPOSITIVOS",
+                            description: "A produção de energia encerrou e bateria em descarregamento.",
+                            color: 16711680,
+                            fields: [
+                                { name: "🔌 Ação Automática", value: `\` DESLIGADO \``, inline: false },
+                                { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: false },
+                                { name: "Capacidade Restante", value: `\`${CAPACIDADE}\``, inline: false }
+                            ],
+                            timestamp: new Date().toISOString(),
+                            footer: { text: "Sistema de Monitoramento IoT" }
+                        };
+
+                        console.log(`[Alerta-Discord] Enviando alerta de DESLIGAR - Dispositivo ${ID_DISPOSITIVO}.`);
+
+                        try {
+                            await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embedDesligar] });
+                            console.log(`[Alerta-Envio] Alerta enviado com sucesso!`);
+                        } catch (error) {
+                            console.error("[Alerta-Erro-Envio-Discord] Erro ao enviar pro Discord:", error.message);
+                        }
+                    }
+                    else if (COMANDO === 'LIGAR') {
+                        const embedLigar = {
+                            title: "🔋 RELIGANDO DISPOSITIVOS",
+                            description: "A produção de energia retornou e bateria está recarregando.",
+                            color: 65280,
+                            fields: [
+                                { name: "🔌 Ação Automática", value: `\` RELIGANDO \``, inline: false },
+                                { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: false },
+                                { name: "Capacidade Atual", value: `\`${CAPACIDADE}\``, inline: false }
+                            ],
+                            timestamp: new Date().toISOString(),
+                            footer: { text: "Sistema de Monitoramento IoT" }
+                        };
+
+                        console.log(`[Alerta-Discord] Enviando alerta de LIGAR - Dispositivo ${ID_DISPOSITIVO}.`);
+
+                        try {
+                            await axios.post(DISCORD_WEBHOOK_URL, { embeds: [embedLigar] });
+                            console.log(`[Alerta-Envio] Alerta enviado com sucesso!`);
+                        } catch (error) {
+                            console.error("[Alerta-Erro-Envio-Discord] Erro ao enviar pro Discord:", error.message);
+                        }
+                    }
                 }
+            } catch (err) {
+                console.error("[Alerta-Erro] Falha ao processar mensagem do Kafka:", err.message);
             }
         },
     });
 }
+
 run().catch(console.error);
