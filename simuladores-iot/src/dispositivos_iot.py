@@ -10,22 +10,16 @@ from paho.mqtt.enums import CallbackAPIVersion
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = 1883
 TOPICO_COMANDOS = "comandos/#"
+TOPICO_STATUS_CONEXAO = "status_conexao/dispositivos_iot"
 
 # 1. IoTs Simulados
 dispositivos = {
-    "servidor": {
-        "id_dispositivo": "servidor_sistema",
-        "potencia_nominal": 150.0,
-        "tensao_nominal": 220.0,
-        "fator_potencia": 0.95,
-        "tipo_comportamento": "carga_variavel",
-        "ligado": True,
-        "prioridade": 1,
-        "categoria": "Critico",
-    },
-    "sensor_temperatura": {
-        "id_dispositivo": "sensor_temperatura",
-        "potencia_nominal": 1.5,
+    # ==========================================
+    # PRIORIDADE 1: CRÍTICO (Segurança e Conectividade Base)
+    # ==========================================
+    "modem_roteador": {
+        "id_dispositivo": "modem_roteador",
+        "potencia_nominal": 15.0,
         "tensao_nominal": 220.0,
         "fator_potencia": 0.90,
         "tipo_comportamento": "constante",
@@ -43,21 +37,11 @@ dispositivos = {
         "prioridade": 1,
         "categoria": "Critico",
     },
-    "luzes_seguranca": {
-        "id_dispositivo": "luzes_seguranca",
-        "potencia_nominal": 40.0,
+    "fechadura_alarme": {
+        "id_dispositivo": "fechadura_alarme",
+        "potencia_nominal": 8.0,
         "tensao_nominal": 220.0,
-        "fator_potencia": 0.98,
-        "tipo_comportamento": "constante",
-        "ligado": True,
-        "prioridade": 1,
-        "categoria": "Critico",
-    },
-    "modem": {
-        "id_dispositivo": "modem",
-        "potencia_nominal": 12.0,
-        "tensao_nominal": 220.0,
-        "fator_potencia": 0.90,
+        "fator_potencia": 0.92,
         "tipo_comportamento": "constante",
         "ligado": True,
         "prioridade": 1,
@@ -65,34 +49,114 @@ dispositivos = {
     },
     "geladeira": {
         "id_dispositivo": "geladeira",
-        "potencia_standby": 12.0,
-        "potencia_compressor": 150.0,
+        "potencia_standby": 15.0,
+        "potencia_compressor": 160.0,
         "tensao_nominal": 127.0,
         "fator_potencia": 0.82,
         "tipo_comportamento": "ciclico",
         "ligado": True,
         "prioridade": 2,
-        "categoria": "Essencial",
+        "categoria": "Critico",
     },
-    "ventilador": {
-        "id_dispositivo": "ventilador",
+    "iluminacao_emergencia": {
+        "id_dispositivo": "iluminacao_emergencia",
+        "potencia_nominal": 20.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 2,
+        "categoria": "Critico",
+    },
+    "carregador_notebook": {
+        "id_dispositivo": "carregador_notebook",
         "potencia_nominal": 65.0,
         "tensao_nominal": 127.0,
-        "fator_potencia": 0.85,
+        "fator_potencia": 0.88,
         "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 4,
+        "categoria": "Critico",
+    },
+    "computador_home_office": {
+        "id_dispositivo": "computador_home_office",
+        "potencia_nominal": 180.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "carga_variavel",
         "ligado": True,
         "prioridade": 3,
         "categoria": "Importante",
     },
-    "alexa": {
-        "id_dispositivo": "alexa",
-        "potencia_nominal": 3.0,
+    "smart_tv_sala": {
+        "id_dispositivo": "smart_tv_sala",
+        "potencia_nominal": 110.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 4,
+        "categoria": "Secundario",
+    },
+    "soundbar": {
+        "id_dispositivo": "soundbar",
+        "potencia_nominal": 45.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.90,
+        "tipo_comportamento": "carga_variavel",
+        "ligado": True,
+        "prioridade": 4,
+        "categoria": "Secundario",
+    },
+    "assistente_alexa": {
+        "id_dispositivo": "assistente_alexa",
+        "potencia_nominal": 5.0,
         "tensao_nominal": 127.0,
         "fator_potencia": 0.90,
         "tipo_comportamento": "constante",
         "ligado": True,
         "prioridade": 4,
         "categoria": "Secundario",
+    },
+    "console_videogame": {
+        "id_dispositivo": "console_videogame",
+        "potencia_nominal": 220.0,
+        "tensao_nominal": 220.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "carga_variavel",
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "fita_led_rgb": {
+        "id_dispositivo": "fita_led_rgb",
+        "potencia_nominal": 30.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.90,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "robo_aspirador": {
+        "id_dispositivo": "robo_aspirador",
+        "potencia_nominal": 35.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.95,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
+    },
+    "difusor_aromatizador": {
+        "id_dispositivo": "difusor_aromatizador",
+        "potencia_nominal": 12.0,
+        "tensao_nominal": 127.0,
+        "fator_potencia": 0.85,
+        "tipo_comportamento": "constante",
+        "ligado": True,
+        "prioridade": 5,
+        "categoria": "Superficial",
     },
 }
 
@@ -150,10 +214,15 @@ client = mqtt.Client(
 
 client.on_message = on_message
 conectado = False
+
+# Envia o status MQTT-desligado
+client.will_set(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
+
 while not conectado:
     try:
         client.connect(MQTT_HOST, MQTT_PORT, 60)
         conectado = True
+        client.loop_start()
         print("Conexão com o broker MQTT concluída.")
     except (socket.gaierror, ConnectionRefusedError) as e:
         print(f"Broker MQTT indisponível ({e}). Tentando novamente em 5 segundos...")
@@ -161,9 +230,11 @@ while not conectado:
         
 # Topico das ordens de desligar/ligar
 client.subscribe(TOPICO_COMANDOS) 
-client.loop_start()
 
 print("[IoT-Start] Iniciando Dispositivos")
+
+# Envia o status MQTT-Ligado 
+client.publish(topic=TOPICO_STATUS_CONEXAO, payload="online", qos=1, retain=True)
 
 try:
     while True:
@@ -217,5 +288,6 @@ try:
 
 except KeyboardInterrupt:
     print("\n [IoT-Finalizado] Desligando o simulador de dispositivos...")
+    client.publish(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
     client.loop_stop()
     client.disconnect()
