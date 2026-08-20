@@ -17,6 +17,7 @@ const kafka = new Kafka({
 const consumer = kafka.consumer({ groupId: 'grupo-alertas-discord' });
 
 let capacidadeAtual = "Desconhecido";
+let autonomiaAtual = "Desconhecido";
 
 async function run() {
     await consumer.connect();
@@ -37,6 +38,9 @@ async function run() {
                     if (payload.nivel_bateria !== undefined) {
                         capacidadeAtual = payload.nivel_bateria;
                     }
+                    if (payload.autonomia_estimada_horas !== undefined) {
+                        autonomiaAtual = payload.autonomia_estimada_horas;
+                    }
                 }
                 else if (topic === 'comandos_mqtt_iot') {
                     const { ID_DISPOSITIVO, CATEGORIA, COMANDO } = payload;
@@ -44,6 +48,11 @@ async function run() {
                     const CAPACIDADE = capacidadeAtual !== "Desconhecido"
                         ? `${Math.round(Number(capacidadeAtual))}%`
                         : "Desconhecido";
+
+                    let DURACAO = "Desconhecido";
+                    if (autonomiaAtual !== "Desconhecido") {
+                        DURACAO = Number(autonomiaAtual) === -1 ? "Carregando ⚡" : `${Number(autonomiaAtual).toFixed(1)} h`;
+                    }
 
                     if (COMANDO === 'DESLIGAR') {
                         const embedDesligar = {
@@ -53,7 +62,8 @@ async function run() {
                             fields: [
                                 { name: "🔌 Ação Automática", value: `\` DESLIGADO \``, inline: false },
                                 { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: false },
-                                { name: "Capacidade Restante", value: `\`${CAPACIDADE}\``, inline: false }
+                                { name: "Capacidade Restante", value: `\`${CAPACIDADE}\``, inline: false },
+                                { name: "Duração da Bateria", value: `\`${DURACAO}\``, inline: false }
                             ],
                             timestamp: new Date().toISOString(),
                             footer: { text: "Sistema de Monitoramento IoT" }
@@ -76,7 +86,8 @@ async function run() {
                             fields: [
                                 { name: "🔌 Ação Automática", value: `\` RELIGANDO \``, inline: false },
                                 { name: "📋 Categoria", value: `\`${CATEGORIA}\``, inline: false },
-                                { name: "Capacidade Atual", value: `\`${CAPACIDADE}\``, inline: false }
+                                { name: "Capacidade Atual", value: `\`${CAPACIDADE}\``, inline: false },
+                                { name: "Duração da Bateria", value: `\`${DURACAO}\``, inline: false }
                             ],
                             timestamp: new Date().toISOString(),
                             footer: { text: "Sistema de Monitoramento IoT" }
