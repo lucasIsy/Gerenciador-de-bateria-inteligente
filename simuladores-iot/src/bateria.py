@@ -1,8 +1,3 @@
-# ====================================================================
-# [ATENCAO] Os IoTs foram criados utilizando o gemini pro 3.1.
-# O objetivo é criar um dispositivo que se aproximasse da realidade.
-# ====================================================================
-
 import time
 import json
 import os
@@ -11,8 +6,8 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
 # --- CONFIGURAÇÕES DA BATERIA ---
-BATERIA_MAX_WH = 1000.0
-bateria_atual_wh = 1000.0
+BATERIA_MAX_WH = 5000.0
+bateria_atual_wh = 5000.0
 geracao_solar_atual = 0.0
 consumo_iot_atual = 0.0
 
@@ -20,15 +15,16 @@ consumo_iot_atual = 0.0
 consumos_por_dispositivo = {}
 
 # Configuração de tempo para o teste correr mais rápido
-# 1 segundo real vai simular 5 minutos
-FATOR_TEMPO_HORAS = 5 / 60 
+# 1 segundo real vai simular 6 minutos
+FATOR_TEMPO_HORAS = 6 / 60 
 
 # --- CONFIGURAÇÃO MQTT ---
 MQTT_HOST = os.getenv("MQTT_HOST", "localhost")
 MQTT_PORT = 1883
 TOPICO_GERACAO = "iot/geracao/painel"
-TOPICO_STATUS_BATERIA = "iot/armazenamento/bateria"
+TOPICO_TELEMETRIA_BATERIA = "iot/armazenamento/bateria"
 TOPICO_CONSUMO = "iot/dispositivos/+/consumo"
+TOPICO_STATUS_CONEXAO = "status_conexao/bateria_principal"
 
 def on_message(client, userdata, msg):
     global geracao_solar_atual, consumo_iot_atual, consumos_por_dispositivo
@@ -57,10 +53,15 @@ client = mqtt.Client(
 
 client.on_message = on_message
 conectado = False
+
+# Envia o status MQTT-desligado
+client.will_set(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
+
 while not conectado:
     try:
         client.connect(MQTT_HOST, MQTT_PORT, 60)
         conectado = True
+        client.loop_start()
         print("Conectado ao broker MQTT com sucesso!")
     except (socket.gaierror, ConnectionRefusedError) as e:
         print(f"Broker MQTT indisponível ({e}). Tentando novamente em 5 segundos...")
@@ -69,9 +70,11 @@ while not conectado:
 # Se inscreve nos topico de geracao e dispositivos para realizar o calculo
 # Bateria = Bateria + (geracao - consumo(dispositivos IoT)
 client.subscribe([(TOPICO_GERACAO, 0), (TOPICO_CONSUMO, 0)])
-client.loop_start()
 
 print("[IoT-Bateria] Inicializada a 100%.")
+
+# Envia o status MQTT-Ligado 
+client.publish(topic=TOPICO_STATUS_CONEXAO, payload="online", qos=1, retain=True)
 
 try:
     while True:
@@ -85,8 +88,10 @@ try:
         bateria_atual_wh += variacao_energia
         
         # 4. Evita o acumulo de saldo negativo na bateria
-        if bateria_atual_wh < 0.0:
+        if bateria_atual_wh <= 0.0:
             bateria_atual_wh = 0.0
+            if saldo_watts < 0:
+                saldo_watts = 0.0
 
         # Evita que ela passe do limite máximo (100%)
         elif bateria_atual_wh > BATERIA_MAX_WH:
@@ -113,11 +118,12 @@ try:
         }
         
         # 7. Publica o status final no MQTT para o ecossistema Kafka
-        client.publish(TOPICO_STATUS_BATERIA, json.dumps(payload_status))
+        client.publish(TOPICO_TELEMETRIA_BATERIA, json.dumps(payload_status), qos=1, retain=False)
         
         time.sleep(1) # Ciclo de atualização de 1 segundo
 
 except KeyboardInterrupt:
     print("\n🔌 A desligar o simulador da bateria...")
+    client.publish(topic=TOPICO_STATUS_CONEXAO, payload="offline", qos=1, retain=True)
     client.loop_stop()
     client.disconnect()

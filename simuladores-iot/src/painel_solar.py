@@ -18,7 +18,7 @@ TOPICO = "iot/geracao/painel"
 TOPICO_STATUS_CONEXAO = "status_conexao/painel_solar"
 
 # --- CONFIGURAÇÃO DO PAINEL ---
-POTENCIA_PICO = 3 * 545  # 3 painéis de 545W
+POTENCIA_PICO = 4 * 545  # 4 painéis de 545W
 
 # Inicializa o cliente MQTT
 client = mqtt.Client(
